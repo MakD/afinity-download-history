@@ -1,18 +1,8 @@
 <div align="center">
-
-🧩 [**Also available as a Chrome extension**](https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn)
-
-<a href="https://www.star-history.com/star-history/star-history">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=star-history/star-history&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=star-history/star-history" />
-   <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=star-history/star-history" />
- </picture>
-</a>
-
+ 
 # :sparkles: Star History :sparkles:
  
-[**star-history.com**](https://star-history.com), **the de facto GitHub star history graph.**
+release-history, **a new cool history graph for download tracking**
 
 <img src="https://raw.githubusercontent.com/star-history/star-history/main/assets/nvidia-gtc-2026.webp" />
 
@@ -45,32 +35,6 @@
 </p>
 
 </div>
-
-## 🎁 Sponsors
-
-### Bytebase
-
-[Bytebase](https://bytebase.com?source=star-history) is an open source, web-based database schema change and version control tool for teams. Supporting MySQL, PostgreSQL, Oracle, MongoDB, Redis, Snowflake, ClickHouse, TiDB, Google Spanner.
-
-<a href="https://bytebase.com?source=star-history"><img src="https://raw.githubusercontent.com/star-history/star-history/main/frontend/public/assets/ft/bytebase/landing.webp" /></a>
-
-### Dify
-
-[Dify](https://dify.ai/?utm_source=star-history) is an open source LLMOps platform that helps developers build AI applications more simply and quickly. Its core idea is to define various aspects of AI applications, including Prompts, Contexts, and Plugins, through declarative YAML files.
-
-<a href="https://dify.ai/?utm_source=star-history"><img src="https://raw.githubusercontent.com/star-history/star-history/main/frontend/public/assets/ft/dify/landing.webp" /></a>
-
-### SerpApi
-
-[SerpApi](https://serpapi.com/?utm_source=starhistory) scrapes search engine results easily using a simple API, including Google, Google Maps, Amazon, and more
-
-<a href="https://serpapi.com/?utm_source=starhistory"><img src="https://raw.githubusercontent.com/star-history/star-history/main/frontend/public/assets/ft/serpapi/landing.webp" /></a>
-
-### pgplex
-
-[pgplex](https://www.pgplex.com/?utm_source=starhistory) is the Postgres toolchain for humans and agents
-
-<a href="https://www.pgplex.com/?utm_source=starhistory"><img src="https://raw.githubusercontent.com/star-history/star-history/main/frontend/public/assets/ft/pgplex/landing.webp" /></a>
 
 ## ✨ Features
 
