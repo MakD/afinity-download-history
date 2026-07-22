@@ -1,6 +1,6 @@
 <div align="center">
  
-# :sparkles: Star History :sparkles:
+# :sparkles: Release History :sparkles:
  
 release-history, **a new cool history graph for download tracking**
 
