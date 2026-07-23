@@ -1,5 +1,5 @@
 module.exports = {
-    siteUrl: 'https://www.star-history.com',
+    siteUrl: 'https://downloadhistory.varunaditya.xyz',
     outDir: 'out',
     generateRobotsTxt: true,
     robotsTxtOptions: {
