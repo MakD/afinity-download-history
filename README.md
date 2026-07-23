@@ -4,8 +4,6 @@
  
 release-history, **a new cool history graph for download tracking**
 
-<img src="https://raw.githubusercontent.com/star-history/star-history/main/assets/nvidia-gtc-2026.webp" />
-
 </div>
 
 ---
