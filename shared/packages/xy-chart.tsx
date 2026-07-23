@@ -2,8 +2,6 @@ import { scaleLinear, scaleTime, scaleSymlog } from "d3-scale"
 import { select } from "d3-selection"
 import { line, curveMonotoneX } from "d3-shape"
 import { AxisScale } from "d3-axis";
-import dayjs from "dayjs"
-import uniq from "lodash/uniq"
 import ToolTip from "./components/ToolTip"
 import { drawXAxis, drawYAxis } from "./utils/drawAxis"
 import addFilter from "./utils/addFilter"
@@ -12,6 +10,19 @@ import { drawTitle, drawXLabel, drawYLabel } from "./utils/drawLabels"
 import drawLegend from "./utils/drawLegend"
 import getFormatTimeline, { getTimestampFormatUnit } from "./utils/getFormatTimeline"
 import { D3Selection, Position, LegendPosition, colors, darkColors } from "./types"
+
+const uniq = <T,>(arr: T[]) => [...new Set(arr)]
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+/** Format dates for tooltips; keeps the previous dayjs "MMM DD, YYYY" look without CJS interop issues. */
+const formatChartDate = (value: Date | number | string) => {
+    const d = value instanceof Date ? value : new Date(value)
+    const dd = String(d.getDate()).padStart(2, "0")
+    return `${MONTHS[d.getMonth()]} ${dd}, ${d.getFullYear()}`
+}
+
+const toDate = (value: Date | number | string) => (value instanceof Date ? value : new Date(value))
 
 const margin = {
     top: 50,
@@ -144,7 +155,7 @@ const smoothLinePoints = (points: XYPoint[], sampleCount = 96, sigma = 3.5): XYP
     const sampleX = points[0].x
     const xIsNumber = typeof sampleX === "number"
     return smoothed.map((point) => ({
-        x: xIsNumber ? point.x : (dayjs(point.x) as any),
+        x: xIsNumber ? point.x : (toDate(point.x as any) as any),
         y: point.y
     }))
 }
@@ -230,7 +241,7 @@ const XYChart = (
     if (options.xTickLabelType === "Date") {
         data.datasets.forEach((dataset) => {
           dataset.data.forEach((d) => {
-            d.x = dayjs(d.x) as any;
+            d.x = toDate(d.x as any) as any;
           });
         });
     }
@@ -440,7 +451,7 @@ const XYChart = (
                 }
 
                 const point = data.datasets[xyGroupIndex].data[i]
-                let title = dayjs(point.x).format(options.dateFormat)
+                let title = formatChartDate(point.x as any)
                 if (options.xTickLabelType === "Number") {
                     const type = getTimestampFormatUnit(Number(data.datasets[xyGroupIndex].data[1].x || point.x))
                     title = getFormatTimeline(Number(point.x), type)

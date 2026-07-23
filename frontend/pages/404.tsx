@@ -3,6 +3,7 @@ import Link from "next/link"
 import type { GetStaticProps, NextPage } from "next"
 import { formatNumber } from "../helpers/format"
 import { loadRepos } from "@shared/common/repo-data"
+import reposJson from "@gh-data/repos.json"
 import PageShell from "../components/PageShell"
 
 interface NotFoundProps {
@@ -49,7 +50,7 @@ const NotFound: NextPage<NotFoundProps> = ({ minStars }) => {
 }
 
 export const getStaticProps: GetStaticProps<NotFoundProps> = async () => {
-    const { min_stars: minStars } = loadRepos()
+    const { min_stars: minStars } = loadRepos(reposJson as any)
     return { props: { minStars } }
 }
 

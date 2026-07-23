@@ -6,6 +6,7 @@ import type { ReactNode } from "react"
 import type { GetStaticPaths, GetStaticProps, NextPage } from "next"
 import { formatNumber } from "../helpers/format"
 import { loadRepos } from "@shared/common/repo-data"
+import reposJson from "@gh-data/repos.json"
 import type { RepoCardData } from "@shared/types/gh"
 import PageShell from "../components/PageShell"
 import toast from "../helpers/toast"
@@ -470,7 +471,7 @@ const RepoPage: NextPage<RepoPageProps> = ({ repo, minStars, prevRepo, nextRepo 
 // --- Data loading ---
 
 export const getStaticPaths: GetStaticPaths = async () => {
-    const { repos } = loadRepos()
+    const { repos } = loadRepos(reposJson as any)
 
     const paths = repos.map((repo) => ({
         params: { slug: repo.name.toLowerCase().split("/") },
@@ -480,7 +481,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 }
 
 export const getStaticProps: GetStaticProps<RepoPageProps> = async ({ params }) => {
-    const store = loadRepos()
+    const store = loadRepos(reposJson as any)
 
     const slug = params?.slug
     if (!Array.isArray(slug) || slug.length !== 2) {

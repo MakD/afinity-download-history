@@ -1,5 +1,5 @@
 import { D3Selection, LegendPosition } from "../types"
-import uniq from "lodash/uniq"
+const uniq = <T,>(arr: T[]) => [...new Set(arr)]
 
 interface DrawLegendConfig {
     items: {
