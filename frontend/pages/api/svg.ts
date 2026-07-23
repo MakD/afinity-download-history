@@ -131,6 +131,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const typeParam = typeof query.type === "string" ? query.type : "";
   const logscaleParam = query.logscale;
   const legendParam = typeof query.legend === "string" ? query.legend : "";
+  const titleParam = typeof query.title === "string" ? query.title : undefined;
+  const title =
+    titleParam === undefined
+      ? "Download History"
+      : ["", "false", "0", "none"].includes(titleParam.toLowerCase()) ? "" : titleParam;
   let type: ChartMode = "Date";
   let size = typeof query.size === "string" ? query.size : "";
 
@@ -158,7 +163,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     size = "laptop";
   }
 
-  const svgCacheKey = `${repos.join(",")}|${type}|${size}|${theme}|${transparent}|${legendPosition}|${useLogScale}`;
+  const svgCacheKey = `${repos.join(",")}|${type}|${size}|${theme}|${transparent}|${legendPosition}|${useLogScale}|${title}`;
   const cachedSvg = svgCache.get(svgCacheKey);
   if (cachedSvg) {
     recordCacheHit("svgChart");
@@ -231,7 +236,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     XYChart(
       svg,
       {
-        title: "Download History",
+        title,
         xLabel: type === "Date" ? "Date" : "Timeline",
         yLabel: "Downloads",
         data: convertDataToChartData(repoData, type),
