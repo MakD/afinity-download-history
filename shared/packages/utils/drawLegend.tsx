@@ -1,5 +1,4 @@
 import { D3Selection, LegendPosition } from "../types"
-const uniq = <T,>(arr: T[]) => [...new Set(arr)]
 
 interface DrawLegendConfig {
     items: {
@@ -20,14 +19,11 @@ const drawLegend = (selection: D3Selection, { items, strokeColor, backgroundColo
     const xkcdCharWidth = 7
     const xkcdCharHeight = 20
     const colorBlockWidth = 8
-    const logoSize = 14
 
     const legend = selection.append("svg")
     const backgroundLayer = legend.append("svg")
     const textLayer = legend.append("svg")
     let maxTextLength = 0
-    // Avatar/logos next to legend labels are disabled (keeps chart cleaner for embeds).
-    const shouldDrawLogo = false
 
     // Calculate background dimensions first
     items.forEach((item) => {
@@ -35,7 +31,7 @@ const drawLegend = (selection: D3Selection, { items, strokeColor, backgroundColo
     })
 
     let bboxWidth = maxTextLength * (xkcdCharWidth + 0.5) + colorBlockWidth + legendXPadding
-    const backgroundWidth = Math.max(bboxWidth + legendXPadding * 2, maxTextLength * xkcdCharWidth + colorBlockWidth + legendXPadding * 2 + 6 + (shouldDrawLogo ? legendXPadding + logoSize : 0))
+    const backgroundWidth = Math.max(bboxWidth + legendXPadding * 2, maxTextLength * xkcdCharWidth + colorBlockWidth + legendXPadding * 2 + 6)
     const backgroundHeight = items.length * xkcdCharHeight + legendYPadding * 2
 
     // Calculate position based on legendPosition
@@ -59,30 +55,12 @@ const drawLegend = (selection: D3Selection, { items, strokeColor, backgroundColo
             .attr("filter", "url(#xkcdify)")
             .attr("x", legendX + legendXPadding)
             .attr("y", legendY + 12 + xkcdCharHeight * i)
-        if (shouldDrawLogo) {
-            textLayer
-                .append("defs")
-                .append("clipPath")
-                .attr("id", `clip-circle-title-${item.text}`)
-                .append("circle")
-                .attr("r", logoSize / 2)
-                .attr("cx", legendX + legendXPadding + colorBlockWidth + legendXPadding + logoSize / 2)
-                .attr("cy", legendY + 12 + xkcdCharHeight * i - 4 + logoSize / 2)
-            textLayer
-                .append("image")
-                .attr("x", legendX + legendXPadding + colorBlockWidth + legendXPadding)
-                .attr("y", legendY + 12 + xkcdCharHeight * i - 4)
-                .attr("height", logoSize)
-                .attr("width", logoSize)
-                .attr("href", item.logo)
-                .attr("clip-path", `url(#clip-circle-title-${item.text})`)
-        }
         // draw text
         textLayer
             .append("text")
             .style("font-size", "15px")
             .style("fill", strokeColor)
-            .attr("x", legendX + legendXPadding + colorBlockWidth + (shouldDrawLogo ? legendXPadding + logoSize : 0) + 6)
+            .attr("x", legendX + legendXPadding + colorBlockWidth + 6)
             .attr("y", legendY + 12 + xkcdCharHeight * i + 8)
             .text(item.text)
     })
