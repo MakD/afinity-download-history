@@ -126,6 +126,96 @@ namespace api {
 
         return data.avatar_url
     }
+
+    interface GitHubReleaseAsset {
+        download_count?: number
+    }
+
+    interface GitHubRelease {
+        tag_name: string
+        draft?: boolean
+        published_at: string | null
+        created_at: string
+        assets?: GitHubReleaseAsset[]
+    }
+
+    export async function getRepoReleases(repo: string, token?: string, page = 1) {
+        return axios.get<GitHubRelease[]>(`https://api.github.com/repos/${repo}/releases`, {
+            params: {
+                per_page: API_PER_PAGE,
+                page
+            },
+            headers: {
+                Accept: "application/vnd.github+json",
+                Authorization: token ? `token ${token}` : ""
+            },
+            timeout: REQUEST_TIMEOUT_MS
+        })
+    }
+
+    /**
+     * Fetch all published releases and build a cumulative download history.
+     * Each point is a release: count = sum of asset download_count for that
+     * release plus all earlier releases (chronological order).
+     */
+    export async function getRepoReleaseDownloadRecords(repo: string, token = "") {
+        const releases: GitHubRelease[] = []
+        let page = 1
+
+        while (true) {
+            const { data, headers, status } = await getRepoReleases(repo, token, page)
+
+            if (page === 1 && (!data || data.length === 0)) {
+                throw {
+                    status,
+                    data: []
+                }
+            }
+
+            releases.push(...data)
+
+            const headerLink = headers["link"] || ""
+            const hasNext = /rel="next"/.test(headerLink)
+            if (!hasNext || data.length < API_PER_PAGE) {
+                break
+            }
+            page += 1
+        }
+
+        const published = releases
+            .filter((release) => !release.draft)
+            .map((release) => {
+                const releaseDownloads = (release.assets || []).reduce(
+                    (sum, asset) => sum + (asset.download_count || 0),
+                    0
+                )
+                return {
+                    tag: release.tag_name,
+                    date: utils.getDateString(release.published_at || release.created_at),
+                    releaseDownloads,
+                    // Keep raw timestamp for stable chronological sort
+                    publishedAt: new Date(release.published_at || release.created_at).getTime()
+                }
+            })
+            .sort((a, b) => a.publishedAt - b.publishedAt)
+
+        if (published.length === 0) {
+            throw {
+                status: 501,
+                data: []
+            }
+        }
+
+        let cumulative = 0
+        return published.map(({ tag, date, releaseDownloads }) => {
+            cumulative += releaseDownloads
+            return {
+                date,
+                count: cumulative,
+                tag
+            }
+        })
+    }
 }
 
 export default api

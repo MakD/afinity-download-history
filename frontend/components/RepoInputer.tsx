@@ -268,7 +268,7 @@ export default function RepoInputer({ setChartVisibility }: RepoInputerProps) {
                     className={`h-9 pl-4 pr-4 whitespace-nowrap w-auto text-black border-l border-black hover:bg-zinc-700 hover:text-white ${store.isFetching ? "cursor-wait" : ""}`}
                     onClick={handleAddRepoBtnClick}
                 >
-                    View star history
+                    View download history
                 </button>
             </div>
             <div className="w-full mt-4 flex flex-row justify-center items-center">

@@ -230,7 +230,7 @@ function StarChartViewer({ compact = false }: StarChartViewerProps) {
             ctx.drawImage(chartImage, 10 * scale, 10 * scale, imgWidth * scale, imgHeight * scale)
 
             const link = document.createElement("a")
-            link.download = `star-history-${utils.getDateString(Date.now(), "yyyyMMdd")}.png`
+            link.download = `release-history-${utils.getDateString(Date.now(), "yyyyMMdd")}.png`
             link.href = canvas.toDataURL()
             link.click()
             state.isGeneratingImage = false
@@ -286,16 +286,18 @@ function StarChartViewer({ compact = false }: StarChartViewerProps) {
         if (state.chartData) {
             const currentDate = new Date()
             const formattedDate = `${currentDate.getFullYear()}${currentDate.getMonth() + 1}${currentDate.getDate()}`
-            const filename = `star-history-${formattedDate}.csv`
+            const filename = `release-history-${formattedDate}.csv`
 
             const csvContent =
                 "data:text/csv;charset=utf-8," +
                 state.chartData.datasets.reduce((acc: string, dataset: any) => {
                     dataset.data.forEach((dataPoint: any) => {
-                        acc += `${dataset.label},${new Date(dataPoint.x).toString()},${dataPoint.y}\n`
+                        if (!dataPoint.tag && dataPoint.y === 0) return;
+                        const dateValue = dataPoint.x instanceof Date || typeof dataPoint.x === "string" ? new Date(dataPoint.x).toISOString() : dataPoint.x
+                        acc += `${dataset.label},${dateValue},${dataPoint.tag || ""},${dataPoint.y}\n`
                     })
                     return acc
-                }, "Repository,Date,Stars\n")
+                }, "Repository,Date,Tag,Downloads\n")
 
             const encodedUri = encodeURI(csvContent)
             const link = document.createElement("a")

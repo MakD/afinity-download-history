@@ -10,7 +10,6 @@ import addFilter from "./utils/addFilter"
 import addFont from "./utils/addFont"
 import { drawTitle, drawXLabel, drawYLabel } from "./utils/drawLabels"
 import drawLegend from "./utils/drawLegend"
-import { drawWatermark } from "./utils/drawWatermark"
 import getFormatTimeline, { getTimestampFormatUnit } from "./utils/getFormatTimeline"
 import { D3Selection, Position, LegendPosition, colors, darkColors } from "./types"
 
@@ -24,6 +23,7 @@ const margin = {
 interface XYPoint {
     x: Date | number
     y: number
+    tag?: string
 }
 
 export interface XYData {
@@ -92,6 +92,63 @@ const getDarkThemeDefaultOptions = (transparent: boolean): XYChartOptions => {
     }
 }
 
+const smoothLinePoints = (points: XYPoint[], sampleCount = 96, sigma = 3.5): XYPoint[] => {
+    if (points.length < 3) {
+        return points
+    }
+
+    const xs = points.map((p) => Number(p.x))
+    const ys = points.map((p) => p.y)
+    const xStart = xs[0]
+    const xEnd = xs[xs.length - 1]
+    if (xEnd === xStart) {
+        return points
+    }
+
+    const dense: { x: number; y: number }[] = []
+    for (let i = 0; i < sampleCount; i++) {
+        const t = i / (sampleCount - 1)
+        const x = xStart + t * (xEnd - xStart)
+
+        let j = 0
+        while (j < xs.length - 2 && xs[j + 1] < x) {
+            j += 1
+        }
+        const xA = xs[j]
+        const xB = xs[j + 1]
+        const yA = ys[j]
+        const yB = ys[j + 1]
+        const u = xB === xA ? 1 : (x - xA) / (xB - xA)
+        dense.push({ x, y: yA + u * (yB - yA) })
+    }
+
+    const radius = Math.max(1, Math.ceil(sigma * 3))
+    const smoothed = dense.map((point, i) => {
+        let weightSum = 0
+        let ySum = 0
+        for (let k = -radius; k <= radius; k++) {
+            const idx = i + k
+            if (idx < 0 || idx >= dense.length) {
+                continue
+            }
+            const weight = Math.exp(-(k * k) / (2 * sigma * sigma))
+            weightSum += weight
+            ySum += dense[idx].y * weight
+        }
+        return { x: point.x, y: ySum / weightSum }
+    })
+
+    smoothed[0].y = ys[0]
+    smoothed[smoothed.length - 1].y = ys[ys.length - 1]
+
+    const sampleX = points[0].x
+    const xIsNumber = typeof sampleX === "number"
+    return smoothed.map((point) => ({
+        x: xIsNumber ? point.x : (dayjs(point.x) as any),
+        y: point.y
+    }))
+}
+
 const XYChart = (
     svg: SVGSVGElement,
     { title, xLabel, yLabel, data: { datasets }, showDots, theme, transparent }: XYChartConfig,
@@ -102,14 +159,16 @@ const XYChart = (
         ...initialOptions
     }
 
+    const chartMargins = { ...margin }
+
     if (title) {
-        margin.top = 60
+        chartMargins.top = 60
     }
     if (xLabel) {
-        margin.bottom = 50
+        chartMargins.bottom = 50
     }
     if (yLabel) {
-        margin.left = 70
+        chartMargins.left = 70
     }
 
     const data = {
@@ -157,7 +216,7 @@ const XYChart = (
         `)
     }
 
-    const chart = d3Selection.append("g").attr("transform", `translate(${margin.left},${margin.top})`)
+    const chart = d3Selection.append("g").attr("transform", `translate(${chartMargins.left},${chartMargins.top})`)
 
     const tooltip = new ToolTip({
         selection: d3Selection,
@@ -182,8 +241,8 @@ const XYChart = (
     const allXData = allData.map((d) => d.x)
     const allYData = allData.map((d) => d.y)
 
-    const chartWidth = clientWidth - margin.left - margin.right
-    const chartHeight = clientHeight - margin.top - margin.bottom
+    const chartWidth = clientWidth - chartMargins.left - chartMargins.right
+    const chartHeight = clientHeight - chartMargins.top - chartMargins.bottom
 
     // NOTE: Xaxis with date type(default)
     let xScale: AxisScale<number | Date> = scaleTime()
@@ -216,8 +275,6 @@ const XYChart = (
     }
 
     const svgChart = chart.append("g").attr("pointer-events", "all")
-
-    drawWatermark(svgChart, chartWidth, chartHeight);
 
     if (title) {
         if (uniq(datasets.map((d) => d.label.split("/")[0])).length === 1) {
@@ -274,7 +331,7 @@ const XYChart = (
             .enter()
             .append("path")
             .attr("class", "xkcd-chart-xyline")
-            .attr("d", (d) => drawLine(d.data))
+            .attr("d", (d) => drawLine(smoothLinePoints(d.data)))
             .attr("fill", "none")
             .attr("stroke", (_, i) => options.dataColors[i])
             .attr("filter", filter)
@@ -371,8 +428,8 @@ const XYChart = (
                 const xyGroupIndex = Number(select(nodes[i].parentElement).attr("xy-group-index"))
                 select(nodes[i]).attr("r", dotHoverSize)
 
-                const tipX = (xScale(d.x) || 0) + margin.left + 5
-                const tipY = (yScale(d.y) || 0) + margin.top + 5
+                const tipX = (xScale(d.x) || 0) + chartMargins.left + 5
+                const tipY = (yScale(d.y) || 0) + chartMargins.top + 5
                 let tooltipPositionType : Position = "down_right"
                 if (tipX > chartWidth / 2 && tipY < chartHeight / 2) {
                     tooltipPositionType = "down_left"
@@ -382,10 +439,14 @@ const XYChart = (
                     tooltipPositionType = "up_right"
                 }
 
-                let title = dayjs(data.datasets[xyGroupIndex].data[i].x).format(options.dateFormat)
+                const point = data.datasets[xyGroupIndex].data[i]
+                let title = dayjs(point.x).format(options.dateFormat)
                 if (options.xTickLabelType === "Number") {
-                    const type = getTimestampFormatUnit(Number(data.datasets[xyGroupIndex].data[1].x || data.datasets[xyGroupIndex].data[i].x))
-                    title = getFormatTimeline(Number(data.datasets[xyGroupIndex].data[i].x), type)
+                    const type = getTimestampFormatUnit(Number(data.datasets[xyGroupIndex].data[1].x || point.x))
+                    title = getFormatTimeline(Number(point.x), type)
+                }
+                if (point.tag) {
+                    title = point.tag
                 }
 
                 tooltip.update({

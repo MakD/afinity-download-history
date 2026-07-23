@@ -11,38 +11,38 @@ export const DEFAULT_MAX_REQUEST_AMOUNT = 15
 
 const STAR_HISTORY_LOGO_URL = "https://avatars.githubusercontent.com/u/124480067"
 
-export const getReposStarData = async (repos: string[], token = "", maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT): Promise<RepoStarData[]> => {
+const mapReleaseFetchError = (repo: string, error: any) => {
+    let message = ""
+    let status = 500
+
+    if (error?.response?.status === 404) {
+        message = `Repo ${repo} not found`
+        status = 404
+    } else if (error?.response?.status === 403) {
+        message = "GitHub API rate limit exceeded"
+        status = 403
+    } else if (error?.response?.status === 401) {
+        message = "Access Token Unauthorized"
+        status = 401
+    } else if (error?.status === 501 || (Array.isArray(error?.data) && error.data?.length === 0)) {
+        message = `Repo ${repo} has no release downloads`
+        status = 501
+    } else {
+        message = "Some unexpected error happened, try again later"
+    }
+
+    return { message, status, repo }
+}
+
+export const getReposStarData = async (repos: string[], token = "", _maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT): Promise<RepoStarData[]> => {
     const repoStarDataCacheMap = new Map()
 
     for (const repo of repos) {
         try {
-            const starRecords = await api.getRepoStarRecords(repo, token, maxRequestAmount)
+            const starRecords = await api.getRepoReleaseDownloadRecords(repo, token)
             repoStarDataCacheMap.set(repo, starRecords)
         } catch (error: any) {
-            let message = ""
-            let status = 500
-
-            if (error?.response?.status === 404) {
-                message = `Repo ${repo} not found`
-                status = 404
-            } else if (error?.response?.status === 403) {
-                message = "GitHub API rate limit exceeded"
-                status = 403
-            } else if (error?.response?.status === 401) {
-                message = "Access Token Unauthorized"
-                status = 401
-            } else if (Array.isArray(error?.data) && error.data?.length === 0) {
-                message = `Repo ${repo} has no star history`
-                status = 501
-            } else {
-                message = "Some unexpected error happened, try again later"
-            }
-
-            return Promise.reject({
-                message,
-                status,
-                repo
-            })
+            return Promise.reject(mapReleaseFetchError(repo, error))
         }
     }
 
@@ -62,13 +62,14 @@ export const getReposStarData = async (repos: string[], token = "", maxRequestAm
     })
 }
 
-export const getRepoData = async (repos: string[], token = "", maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT): Promise<RepoData[]> => {
+export const getRepoData = async (repos: string[], token = "", _maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT): Promise<RepoData[]> => {
     const repoDataCacheMap: Map<
         string,
         {
             star: {
                 date: string
                 count: number
+                tag?: string
             }[]
             logo: string
         }
@@ -77,33 +78,16 @@ export const getRepoData = async (repos: string[], token = "", maxRequestAmount 
     for (const repo of repos) {
         try {
             const [starRecords, logo] = await Promise.all([
-                api.getRepoStarRecords(repo, token, maxRequestAmount),
+                api.getRepoReleaseDownloadRecords(repo, token),
                 api.getRepoLogoUrl(repo, token),
             ])
             repoDataCacheMap.set(repo, { star: starRecords, logo })
         } catch (error: any) {
-            let message = ""
-            let status = 500
-
-            if (error?.response?.status === 404) {
-                message = `Repo ${repo} not found`
-                status = 404
-            } else if (error?.response?.status === 403) {
-                message = "GitHub API rate limit exceeded"
-                status = 403
-            } else if (error?.response?.status === 401) {
-                message = "Access Token Unauthorized"
-                status = 401
-            } else if (Array.isArray(error?.data) && error.data?.length === 0) {
-                message = `Repo ${repo} has no star history`
-                status = 501
-            } else {
-                message = "Some unexpected error happened, try again later"
-            }
+            const { message, status } = mapReleaseFetchError(repo, error)
 
             console.error("Failed to request data:", status, message)
 
-            // If encountering not found or no star error, we will return an empty image so that cache can be set.
+            // If encountering not found or no release error, return empty so cache can be set.
             if (status === 404 || status === 501) {
                 return [
                     {
@@ -144,122 +128,63 @@ export const getRepoData = async (repos: string[], token = "", maxRequestAmount 
     })
 }
 
-export const convertStarDataToChartData = (reposStarData: RepoStarData[], chartMode: ChartMode, options?: ChartDataOptions): XYChartData => {
+const toReleaseDownloadPoints = (
+    starRecords: { date: string; count: number; tag?: string }[],
+    chartMode: ChartMode,
+    options?: ChartDataOptions
+) => {
     if (chartMode === "Date") {
-        const datasets: XYData[] = reposStarData.map((item) => {
-            const { repo, starRecords } = item
-            const chartData = starRecords.map((item) => {
-                return {
-                    x: new Date(item.date),
-                    y: Number(item.count)
-                }
+        const chartData = starRecords.map((item) => ({
+            x: new Date(item.date),
+            y: Number(item.count),
+            tag: item.tag
+        }))
+
+        if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
+            const firstDate = new Date(chartData[0].x)
+            firstDate.setDate(firstDate.getDate() - 1)
+            chartData.unshift({
+                x: firstDate,
+                y: 0
             })
-
-            // Add initial zero point at the beginning
-            if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
-                const firstDate = new Date(chartData[0].x)
-                firstDate.setDate(firstDate.getDate() - 1) // One day before first star
-                chartData.unshift({
-                    x: firstDate,
-                    y: 0
-                })
-            }
-
-            return {
-                label: repo,
-                logo: "",
-                data: chartData
-            }
-        })
-
-        return {
-            datasets
         }
-    } else {
-        const datasets: XYData[] = reposStarData.map((item) => {
-            const { repo, starRecords } = item
 
-            const started = starRecords[0].date
-            const chartData = starRecords.map((item) => {
-                return {
-                    x: utils.getTimeStampByDate(new Date(item.date)) - utils.getTimeStampByDate(new Date(started)),
-                    y: Number(item.count)
-                }
-            })
-
-            // Add initial zero point at the beginning
-            if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
-                chartData.unshift({
-                    x: -1, // One day before in timeline mode
-                    y: 0
-                })
-            }
-
-            return {
-                label: repo,
-                logo: "",
-                data: chartData
-            }
-        })
-
-        return {
-            datasets
-        }
+        return chartData
     }
+
+    const started = starRecords[0].date
+    const chartData = starRecords.map((item) => ({
+        x: utils.getTimeStampByDate(new Date(item.date)) - utils.getTimeStampByDate(new Date(started)),
+        y: Number(item.count),
+        tag: item.tag
+    }))
+
+    if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
+        chartData.unshift({
+            x: -1,
+            y: 0
+        })
+    }
+
+    return chartData
+}
+
+export const convertStarDataToChartData = (reposStarData: RepoStarData[], chartMode: ChartMode, options?: ChartDataOptions): XYChartData => {
+    const datasets: XYData[] = reposStarData.map(({ repo, starRecords }) => ({
+        label: repo,
+        logo: "",
+        data: toReleaseDownloadPoints(starRecords, chartMode, options)
+    }))
+
+    return { datasets }
 }
 
 export const convertDataToChartData = (repoData: RepoData[], chartMode: ChartMode, options?: ChartDataOptions): XYChartData => {
-    if (chartMode === "Date") {
-        const datasets: XYData[] = repoData.map(({ repo, starRecords, logoUrl }) => {
-            const chartData = starRecords.map((item) => {
-                return {
-                    x: new Date(item.date),
-                    y: Number(item.count)
-                }
-            })
+    const datasets: XYData[] = repoData.map(({ repo, starRecords, logoUrl }) => ({
+        label: repo,
+        logo: logoUrl,
+        data: toReleaseDownloadPoints(starRecords, chartMode, options)
+    }))
 
-            // Add initial zero point at the beginning
-            if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
-                const firstDate = new Date(chartData[0].x)
-                firstDate.setDate(firstDate.getDate() - 1) // One day before first star
-                chartData.unshift({
-                    x: firstDate,
-                    y: 0
-                })
-            }
-
-            return {
-                label: repo,
-                logo: logoUrl,
-                data: chartData
-            }
-        })
-
-        return { datasets }
-    } else {
-        const datasets: XYData[] = repoData.map(({ repo, starRecords, logoUrl }) => {
-            const chartData = starRecords.map((item) => {
-                return {
-                    x: utils.getTimeStampByDate(new Date(item.date)) - utils.getTimeStampByDate(new Date(starRecords[0].date)),
-                    y: Number(item.count)
-                }
-            })
-
-            // Add initial zero point at the beginning
-            if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
-                chartData.unshift({
-                    x: -1, // One day before in timeline mode
-                    y: 0
-                })
-            }
-
-            return {
-                label: repo,
-                logo: logoUrl,
-                data: chartData
-            }
-        })
-
-        return { datasets }
-    }
+    return { datasets }
 }

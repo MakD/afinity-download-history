@@ -24,9 +24,9 @@ const EmbedChart: React.FC = () => {
         return params
     }
 
-    const embedCode = `## Star History\n\n[![Star History Chart](${API_URL}/svg?${buildQueryParams()})](${typeof window !== "undefined" ? window.location.href : ""})`
+    const embedCode = `## Download History\n\n[![Download History Chart](${API_URL}/svg?${buildQueryParams()})](${typeof window !== "undefined" ? window.location.href : ""})`
 
-    const embedDarkModeCode = `## Star History\n\n<a href="${typeof window !== "undefined" ? window.location.href : ""}">\n <picture>\n   <source media="(prefers-color-scheme: dark)" srcset="${API_URL}/svg?${buildQueryParams("dark")}" />\n   <source media="(prefers-color-scheme: light)" srcset="${API_URL}/svg?${buildQueryParams()}" />\n   <img alt="Star History Chart" src="${API_URL}/svg?${buildQueryParams()}" />\n </picture>\n</a>`
+    const embedDarkModeCode = `## Download History\n\n<a href="${typeof window !== "undefined" ? window.location.href : ""}">\n <picture>\n   <source media="(prefers-color-scheme: dark)" srcset="${API_URL}/svg?${buildQueryParams("dark")}" />\n   <source media="(prefers-color-scheme: light)" srcset="${API_URL}/svg?${buildQueryParams()}" />\n   <img alt="Download History Chart" src="${API_URL}/svg?${buildQueryParams()}" />\n </picture>\n</a>`
 
     const handleCopyBtnClick = () => {
         utils.copyTextToClipboard(embedCode)

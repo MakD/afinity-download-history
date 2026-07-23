@@ -24,13 +24,13 @@ const StarXYChart: React.FC<Props> = ({ classname = "", data, chartMode = "Date"
                 XYChart(
                     svgElRef.current,
                     {
-                        title: "Star History",
+                        title: "Download History",
                         xLabel: chartMode === "Timeline" ? "Timeline" : "Date",
-                        yLabel: "GitHub Stars",
+                        yLabel: "Downloads",
                         data: {
                             datasets: data.datasets
                         },
-                        showDots: true,
+                        showDots: false,
                         transparent: false
                     },
                     {

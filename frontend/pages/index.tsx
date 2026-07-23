@@ -13,8 +13,8 @@ const Index: NextPage = () => {
     const [isChartVisible, setChartVisibility] = useState(false) // Start with false since chart is not visible by default
 
     const metadata = {
-		title:       "GitHub Star History",
-		description: "View and compare GitHub star history graph of open source projects.",
+		title:       "GitHub Download History",
+		description: "View and compare GitHub download history of open source projects using releases tags.",
 		imageURL:    `${SITE_URL}/assets/star-history-preview.webp`,
 	}
 

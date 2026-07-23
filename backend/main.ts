@@ -251,9 +251,9 @@ const startServer = async () => {
       XYChart(
         svg,
         {
-          title: "Star History",
+          title: "Download History",
           xLabel: type === "Date" ? "Date" : "Timeline",
-          yLabel: "GitHub Stars",
+          yLabel: "Downloads",
           data: convertDataToChartData(repoData, type),
           showDots: false,
           transparent: transparent.toLowerCase() === "true",
