@@ -54,10 +54,6 @@ release-history, **a new cool history graph for download tracking**
 <a href="https://star-history.com"><img width="800px" src="https://user-images.githubusercontent.com/24653555/154391264-312b448b-f851-41bf-bb8d-4c21ec6795b6.gif" />
 </a>
 
-### 🧩 [Free chrome extension](https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn)
-
-<a href="https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn"><img width="800px" src="https://user-images.githubusercontent.com/24653555/154391326-61b65d8f-3f9f-4432-b773-5988be75b0ea.png" /></a>
-
 ## 🏗 Development
 
 > We do not accept external contribution.
@@ -71,23 +67,11 @@ release-history, **a new cool history graph for download tracking**
 
 ### Homepage
 
-**Homepage** of star-history with most of useful features and blogs about open source.
-
 ```shell
 cd frontend && pnpm i && pnpm dev
 ```
 
 The website will be served at http://localhost:3000.
-
-### Chrome Extension
-
-**Chrome extension** supports the **basic chart viewer** as a **free** additional product.
-
-```shell
-cd frontend && pnpm build:ext
-```
-
-Load the built `./dist` folder as **unpacked project** to chrome extensions page.
 
 ### API Server
 

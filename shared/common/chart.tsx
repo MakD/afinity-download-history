@@ -145,7 +145,8 @@ const toReleaseDownloadPoints = (
             firstDate.setDate(firstDate.getDate() - 1)
             chartData.unshift({
                 x: firstDate,
-                y: 0
+                y: 0,
+                tag: undefined
             })
         }
 
@@ -162,7 +163,8 @@ const toReleaseDownloadPoints = (
     if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
         chartData.unshift({
             x: -1,
-            y: 0
+            y: 0,
+            tag: undefined
         })
     }
 

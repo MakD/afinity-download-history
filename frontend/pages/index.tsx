@@ -1,8 +1,5 @@
 import React, { useState } from "react"
-import Header from "../components/header"
-import Footer from "../components/footer"
 import LeftSidebar from "../components/LeftSidebar"
-import RightSidebar from "../components/RightSidebar"
 import RepoInputer from "../components/RepoInputer"
 import type { NextPage } from "next"
 import StarChartViewer from "../components/StarChartViewer"
@@ -39,9 +36,8 @@ const Index: NextPage = () => {
                 <meta name="twitter:image" content={metadata.imageURL} />
             </Head>
             <div className="relative w-full h-auto min-h-screen flex flex-col overflow-x-hidden">
-                <Header />
                 <div className="w-full h-auto grow flex flex-row justify-center">
-                    <div className="w-full px-4 h-auto grow lg:grid lg:grid-cols-[1fr_288px] xl:grid-cols-[240px_1fr_288px] lg:gap-8 xl:gap-24">
+                    <div className="w-full px-4 h-auto grow xl:grid xl:grid-cols-[240px_1fr] xl:gap-24">
                         <div className="hidden xl:block">
                             <LeftSidebar />
                         </div>
@@ -50,14 +46,8 @@ const Index: NextPage = () => {
                             <RepoInputer isChartVisible={isChartVisible} setChartVisibility={setChartVisibility} />
                             {isChartVisible && <StarChartViewer />}
                         </div>
-
-                        <div className="hidden lg:block">
-                            <RightSidebar />
-                        </div>
                     </div>
                 </div>
-
-                <Footer />
             </div>
         </>
     )
