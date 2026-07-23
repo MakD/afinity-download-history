@@ -26,8 +26,8 @@ const drawLegend = (selection: D3Selection, { items, strokeColor, backgroundColo
     const backgroundLayer = legend.append("svg")
     const textLayer = legend.append("svg")
     let maxTextLength = 0
-    // If repos have more than one unique owner, draw logo before legend.
-    const shouldDrawLogo = uniq(items.map((i) => i.text.split("/")[0])).length > 1
+    // Avatar/logos next to legend labels are disabled (keeps chart cleaner for embeds).
+    const shouldDrawLogo = false
 
     // Calculate background dimensions first
     items.forEach((item) => {
