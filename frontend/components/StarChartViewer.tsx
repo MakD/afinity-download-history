@@ -4,11 +4,11 @@ import StarXYChart from "./Charts/StarXYChart"
 import TokenSettingDialog from "./TokenSettingDialog"
 import GenerateEmbedCodeDialog from "./GenerateEmbedCodeDialog"
 import EmbedMarkdownSection from "./EmbedMarkdownSection"
-import { useAppStore } from "store"
+import { useAppStore } from "../store"
 import { FaSpinner } from "react-icons/fa"
 import { XYChartData } from "@shared/packages/xy-chart"
 import { convertDataToChartData, getRepoData } from "@shared/common/chart"
-import toast from "helpers/toast"
+import toast from "../helpers/toast"
 import { ChartMode, RepoData, LegendPosition } from "@shared/types/chart"
 
 const VALID_LEGEND_POSITIONS: LegendPosition[] = ["top-left", "bottom-right"]

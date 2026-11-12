@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
     "paths": {
       "@shared/*": [
         "../shared/*"
@@ -9,10 +8,10 @@
         "../gh/data/*"
       ],
       "@components/*": [
-        "components/*"
+        "./components/*"
       ],
       "@styles/*": [
-        "styles/*"
+        "./styles/*"
       ]
     },
     "target": "es2017",

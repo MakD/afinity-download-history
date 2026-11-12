@@ -3,7 +3,6 @@ import { AppProps } from "next/app"
 import "../global.css"
 import "@fortawesome/fontawesome-free/css/all.css"
 import Head from "next/head"
-import Script from "next/script"
 import ErrorBoundary from "../components/ErrorBoundary"
 import { AppStateProvider } from "../store"
 
@@ -23,7 +22,6 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
             <Head>
                 <link rel="icon" href="/assets/favicon.ico" />
             </Head>
-            <Script defer data-domain="downloadhistory.varunaditya.xyz" src="https://plausible.io/js/script.js" strategy="afterInteractive" />
             <AppStateProvider>
                 <ErrorBoundary>
                     {getLayout(<Component {...pageProps} />)}
