@@ -6,15 +6,14 @@
   "type": "module",
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "vinext dev",
-    "build": "vinext build",
-    "start": "vinext start",
-    "lint": "vinext lint",
-    "deploy": "npx @vinext/cloudflare deploy",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
     "prettier": "prettier --write ."
   },
   "dependencies": {
-    "@cf-wasm/og": "^0.4.1",
+    "@cf-wasm/og": "^0.5.0",
     "@fortawesome/fontawesome-free": "^6.5.1",
     "@fortawesome/free-brands-svg-icons": "^6.4.2",
     "@fortawesome/free-regular-svg-icons": "^6.4.2",
@@ -25,7 +24,6 @@
     "@types/d3-selection": "^2.0.0",
     "@types/d3-shape": "^2.1.0",
     "@types/lodash": "^4.14.200",
-    "@vinext/cloudflare": "1.0.0-beta.3",
     "autoprefixer": "^10.4.16",
     "d3-axis": "^2.1.0",
     "d3-scale": "^3.3.0",
@@ -36,24 +34,19 @@
     "linkedom": "^0.18.13",
     "lodash": "^4.17.21",
     "lru-cache": "7.14.1",
-    "next": "^14.1.0",
+    "next": "^15.5.29",
     "postcss": "^8.4.32",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-icons": "^4.12.0",
     "svgo": "^3.2.0",
-    "tailwindcss": "^3.4.0",
-    "typescript": "^4.9.5"
+    "tailwindcss": "^3.4.0"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.46.0",
     "@types/node": "^22.20.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.4",
     "prettier": "^3.2.5",
-    "vinext": "1.0.0-beta.3",
-    "vite": "^8.1.5",
-    "wrangler": "^4.113.0"
+    "typescript": "^5.9.3"
   }
 }

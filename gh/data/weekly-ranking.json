@@ -1,0 +1,105 @@
+{
+  "updated_at": "Feb 23 – Mar 1, 2026",
+  "repos": [
+    {
+      "name": "openclaw/openclaw",
+      "new_stars": 7184,
+      "stars_total": 245741
+    },
+    {
+      "name": "x1xhlol/system-prompts-and-models-of-ai-tools",
+      "new_stars": 2510,
+      "stars_total": 127081
+    },
+    {
+      "name": "obra/superpowers",
+      "new_stars": 2376,
+      "stars_total": 67604
+    },
+    {
+      "name": "anthropics/skills",
+      "new_stars": 1970,
+      "stars_total": 80905
+    },
+    {
+      "name": "affaan-m/everything-claude-code",
+      "new_stars": 1855,
+      "stars_total": 56769
+    },
+    {
+      "name": "anomalyco/opencode",
+      "new_stars": 1397,
+      "stars_total": 114029
+    },
+    {
+      "name": "anthropics/claude-code",
+      "new_stars": 984,
+      "stars_total": 72558
+    },
+    {
+      "name": "f/prompts.chat",
+      "new_stars": 829,
+      "stars_total": 149597
+    },
+    {
+      "name": "public-apis/public-apis",
+      "new_stars": 736,
+      "stars_total": 402511
+    },
+    {
+      "name": "codecrafters-io/build-your-own-x",
+      "new_stars": 682,
+      "stars_total": 470447
+    },
+    {
+      "name": "firecrawl/firecrawl",
+      "new_stars": 617,
+      "stars_total": 87262
+    },
+    {
+      "name": "Shubhamsaboo/awesome-llm-apps",
+      "new_stars": 604,
+      "stars_total": 98994
+    },
+    {
+      "name": "daytonaio/daytona",
+      "new_stars": 600,
+      "stars_total": 61582
+    },
+    {
+      "name": "sindresorhus/awesome",
+      "new_stars": 577,
+      "stars_total": 441785
+    },
+    {
+      "name": "LadybirdBrowser/ladybird",
+      "new_stars": 523,
+      "stars_total": 60843
+    },
+    {
+      "name": "github/spec-kit",
+      "new_stars": 504,
+      "stars_total": 73205
+    },
+    {
+      "name": "DigitalPlatDev/FreeDomain",
+      "new_stars": 490,
+      "stars_total": 150177
+    },
+    {
+      "name": "microsoft/markitdown",
+      "new_stars": 489,
+      "stars_total": 89291
+    },
+    {
+      "name": "clash-verge-rev/clash-verge-rev",
+      "new_stars": 456,
+      "stars_total": 99811
+    },
+    {
+      "name": "torvalds/linux",
+      "new_stars": 453,
+      "stars_total": 220151
+    }
+  ]
+}

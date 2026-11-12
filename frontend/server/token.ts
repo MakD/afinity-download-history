@@ -7,23 +7,6 @@ let initPromise: Promise<void> | null = null;
 const COOLDOWN_MS = 15 * 60 * 1000;
 const exhaustedUntil = new Map<string, number>();
 
-async function readCloudflareSecret(): Promise<string[]> {
-  try {
-    // Preferred on Workers — bindings/secrets live on `env`.
-    const { env } = (await import("cloudflare:workers")) as {
-      env: Record<string, string | undefined>;
-    };
-    const value = env.GITHUB_TOKENS || env.GITHUB_TOKEN || env.GH_TOKEN || "";
-    if (!value.trim()) return [];
-    return value
-      .split(/[\r\n,]+/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
 function collectProcessEnvTokens(): string[] {
   const fromEnv =
     process.env.GITHUB_TOKENS ||
@@ -60,7 +43,6 @@ export const ensureTokensInitialized = async () => {
   initPromise = (async () => {
     const tokenList = [
       ...new Set([
-        ...(await readCloudflareSecret()),
         ...collectProcessEnvTokens(),
         ...(await readTokenFile()),
       ]),
