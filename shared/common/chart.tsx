@@ -119,7 +119,7 @@ export const getRepoData = async (
       console.error("Failed to request data:", status, message);
 
       // If encountering not found or no release error, return empty so cache can be set.
-      if (status === 404 || status === 501) {
+      if (metric === "downloads" && (status === 404 || status === 501)) {
         return [
           {
             repo,
