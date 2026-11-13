@@ -1,192 +1,236 @@
-import { XYChartData, XYData } from "../packages/xy-chart"
-import { ChartMode, RepoStarData, RepoData } from "../types/chart"
-import api from "./api"
-import utils from "./utils"
+import { XYChartData, XYData } from "../packages/xy-chart";
+import { ChartMode, RepoStarData, RepoData } from "../types/chart";
+import api from "./api";
+import utils from "./utils";
 
 export interface ChartDataOptions {
-    insertZeroPoint?: boolean
+  insertZeroPoint?: boolean;
 }
 
-export const DEFAULT_MAX_REQUEST_AMOUNT = 15
+export const DEFAULT_MAX_REQUEST_AMOUNT = 15;
 
-const STAR_HISTORY_LOGO_URL = "https://avatars.githubusercontent.com/u/124480067"
+const STAR_HISTORY_LOGO_URL =
+  "https://avatars.githubusercontent.com/u/124480067";
 
-const mapReleaseFetchError = (repo: string, error: any) => {
-    let message = ""
-    let status = 500
+export type ChartMetric = "downloads" | "stars";
 
-    if (error?.response?.status === 404) {
-        message = `Repo ${repo} not found`
-        status = 404
-    } else if (error?.response?.status === 403) {
-        message = "GitHub API rate limit exceeded"
-        status = 403
-    } else if (error?.response?.status === 401) {
-        message = "Access Token Unauthorized"
-        status = 401
-    } else if (error?.status === 501 || (Array.isArray(error?.data) && error.data?.length === 0)) {
-        message = `Repo ${repo} has no release downloads`
-        status = 501
-    } else {
-        message = "Some unexpected error happened, try again later"
+const mapReleaseFetchError = (
+  repo: string,
+  error: any,
+  metric: ChartMetric = "downloads",
+) => {
+  let message = "";
+  let status = 500;
+
+  if (error?.response?.status === 404) {
+    message = `Repo ${repo} not found`;
+    status = 404;
+  } else if (error?.response?.status === 403) {
+    message = "GitHub API rate limit exceeded";
+    status = 403;
+  } else if (error?.response?.status === 401) {
+    message = "Access Token Unauthorized";
+    status = 401;
+  } else if (
+    error?.status === 501 ||
+    (Array.isArray(error?.data) && error.data?.length === 0)
+  ) {
+    message =
+      metric === "stars"
+        ? `Repo ${repo} has no stars`
+        : `Repo ${repo} has no release downloads`;
+    status = 501;
+  } else {
+    message = "Some unexpected error happened, try again later";
+  }
+
+  return { message, status, repo };
+};
+
+export const getReposStarData = async (
+  repos: string[],
+  token = "",
+  _maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT,
+): Promise<RepoStarData[]> => {
+  const repoStarDataCacheMap = new Map();
+
+  for (const repo of repos) {
+    try {
+      const starRecords = await api.getRepoReleaseDownloadRecords(repo, token);
+      repoStarDataCacheMap.set(repo, starRecords);
+    } catch (error: any) {
+      return Promise.reject(mapReleaseFetchError(repo, error));
     }
+  }
 
-    return { message, status, repo }
-}
-
-export const getReposStarData = async (repos: string[], token = "", _maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT): Promise<RepoStarData[]> => {
-    const repoStarDataCacheMap = new Map()
-
-    for (const repo of repos) {
-        try {
-            const starRecords = await api.getRepoReleaseDownloadRecords(repo, token)
-            repoStarDataCacheMap.set(repo, starRecords)
-        } catch (error: any) {
-            return Promise.reject(mapReleaseFetchError(repo, error))
-        }
+  const reposStarData: RepoStarData[] = [];
+  for (const repo of repos) {
+    const records = repoStarDataCacheMap.get(repo);
+    if (records) {
+      reposStarData.push({
+        repo,
+        starRecords: records,
+      });
     }
+  }
 
-    const reposStarData: RepoStarData[] = []
-    for (const repo of repos) {
-        const records = repoStarDataCacheMap.get(repo)
-        if (records) {
-            reposStarData.push({
-                repo,
-                starRecords: records
-            })
-        }
+  return reposStarData.sort((d1, d2) => {
+    return (
+      Math.max(...d2.starRecords.map((s) => s.count)) -
+      Math.max(...d1.starRecords.map((s) => s.count))
+    );
+  });
+};
+
+export const getRepoData = async (
+  repos: string[],
+  token = "",
+  maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT,
+  metric: ChartMetric = "downloads",
+): Promise<RepoData[]> => {
+  const repoDataCacheMap: Map<
+    string,
+    {
+      star: {
+        date: string;
+        count: number;
+        tag?: string;
+      }[];
+      logo: string;
     }
+  > = new Map();
 
-    return reposStarData.sort((d1, d2) => {
-        return Math.max(...d2.starRecords.map((s) => s.count)) - Math.max(...d1.starRecords.map((s) => s.count))
-    })
-}
+  for (const repo of repos) {
+    try {
+      const [starRecords, logo] = await Promise.all([
+        metric === "stars"
+          ? api.getRepoStarRecords(repo, token, maxRequestAmount)
+          : api.getRepoReleaseDownloadRecords(repo, token),
+        api.getRepoLogoUrl(repo, token),
+      ]);
+      repoDataCacheMap.set(repo, { star: starRecords, logo });
+    } catch (error: any) {
+      const { message, status } = mapReleaseFetchError(repo, error, metric);
 
-export const getRepoData = async (repos: string[], token = "", _maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT): Promise<RepoData[]> => {
-    const repoDataCacheMap: Map<
-        string,
-        {
-            star: {
-                date: string
-                count: number
-                tag?: string
-            }[]
-            logo: string
-        }
-    > = new Map()
+      console.error("Failed to request data:", status, message);
 
-    for (const repo of repos) {
-        try {
-            const [starRecords, logo] = await Promise.all([
-                api.getRepoReleaseDownloadRecords(repo, token),
-                api.getRepoLogoUrl(repo, token),
-            ])
-            repoDataCacheMap.set(repo, { star: starRecords, logo })
-        } catch (error: any) {
-            const { message, status } = mapReleaseFetchError(repo, error)
+      // If encountering not found or no release error, return empty so cache can be set.
+      if (status === 404 || status === 501) {
+        return [
+          {
+            repo,
+            starRecords: [
+              {
+                date: utils.getDateString(Date.now(), "yyyy/MM/dd"),
+                count: 0,
+              },
+            ],
+            logoUrl: STAR_HISTORY_LOGO_URL,
+          },
+        ];
+      }
 
-            console.error("Failed to request data:", status, message)
-
-            // If encountering not found or no release error, return empty so cache can be set.
-            if (status === 404 || status === 501) {
-                return [
-                    {
-                        repo,
-                        starRecords: [
-                            {
-                                date: utils.getDateString(Date.now(), "yyyy/MM/dd"),
-                                count: 0
-                            }
-                        ],
-                        logoUrl: STAR_HISTORY_LOGO_URL
-                    }
-                ]
-            }
-
-            return Promise.reject({
-                message,
-                status,
-                repo
-            })
-        }
+      return Promise.reject({
+        message,
+        status,
+        repo,
+      });
     }
+  }
 
-    const reposStarData: RepoData[] = []
-    for (const repo of repos) {
-        const records = repoDataCacheMap.get(repo)
-        if (records) {
-            reposStarData.push({
-                repo,
-                starRecords: records.star,
-                logoUrl: records.logo
-            })
-        }
+  const reposStarData: RepoData[] = [];
+  for (const repo of repos) {
+    const records = repoDataCacheMap.get(repo);
+    if (records) {
+      reposStarData.push({
+        repo,
+        starRecords: records.star,
+        logoUrl: records.logo,
+      });
     }
+  }
 
-    return reposStarData.sort((d1, d2) => {
-        return Math.max(...d2.starRecords.map((s) => s.count)) - Math.max(...d1.starRecords.map((s) => s.count))
-    })
-}
+  return reposStarData.sort((d1, d2) => {
+    return (
+      Math.max(...d2.starRecords.map((s) => s.count)) -
+      Math.max(...d1.starRecords.map((s) => s.count))
+    );
+  });
+};
 
 const toReleaseDownloadPoints = (
-    starRecords: { date: string; count: number; tag?: string }[],
-    chartMode: ChartMode,
-    options?: ChartDataOptions
+  starRecords: { date: string; count: number; tag?: string }[],
+  chartMode: ChartMode,
+  options?: ChartDataOptions,
 ) => {
-    if (chartMode === "Date") {
-        const chartData = starRecords.map((item) => ({
-            x: new Date(item.date),
-            y: Number(item.count),
-            tag: item.tag
-        }))
-
-        if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
-            const firstDate = new Date(chartData[0].x)
-            firstDate.setDate(firstDate.getDate() - 1)
-            chartData.unshift({
-                x: firstDate,
-                y: 0,
-                tag: undefined
-            })
-        }
-
-        return chartData
-    }
-
-    const started = starRecords[0].date
+  if (chartMode === "Date") {
     const chartData = starRecords.map((item) => ({
-        x: utils.getTimeStampByDate(new Date(item.date)) - utils.getTimeStampByDate(new Date(started)),
-        y: Number(item.count),
-        tag: item.tag
-    }))
+      x: new Date(item.date),
+      y: Number(item.count),
+      tag: item.tag,
+    }));
 
-    if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
-        chartData.unshift({
-            x: -1,
-            y: 0,
-            tag: undefined
-        })
+    if (
+      options?.insertZeroPoint &&
+      chartData.length > 0 &&
+      chartData[0].y > 0
+    ) {
+      const firstDate = new Date(chartData[0].x);
+      firstDate.setDate(firstDate.getDate() - 1);
+      chartData.unshift({
+        x: firstDate,
+        y: 0,
+        tag: undefined,
+      });
     }
 
-    return chartData
-}
+    return chartData;
+  }
 
-export const convertStarDataToChartData = (reposStarData: RepoStarData[], chartMode: ChartMode, options?: ChartDataOptions): XYChartData => {
-    const datasets: XYData[] = reposStarData.map(({ repo, starRecords }) => ({
-        label: repo,
-        logo: "",
-        data: toReleaseDownloadPoints(starRecords, chartMode, options)
-    }))
+  const started = starRecords[0].date;
+  const chartData = starRecords.map((item) => ({
+    x:
+      utils.getTimeStampByDate(new Date(item.date)) -
+      utils.getTimeStampByDate(new Date(started)),
+    y: Number(item.count),
+    tag: item.tag,
+  }));
 
-    return { datasets }
-}
+  if (options?.insertZeroPoint && chartData.length > 0 && chartData[0].y > 0) {
+    chartData.unshift({
+      x: -1,
+      y: 0,
+      tag: undefined,
+    });
+  }
 
-export const convertDataToChartData = (repoData: RepoData[], chartMode: ChartMode, options?: ChartDataOptions): XYChartData => {
-    const datasets: XYData[] = repoData.map(({ repo, starRecords, logoUrl }) => ({
-        label: repo,
-        logo: logoUrl,
-        data: toReleaseDownloadPoints(starRecords, chartMode, options)
-    }))
+  return chartData;
+};
 
-    return { datasets }
-}
+export const convertStarDataToChartData = (
+  reposStarData: RepoStarData[],
+  chartMode: ChartMode,
+  options?: ChartDataOptions,
+): XYChartData => {
+  const datasets: XYData[] = reposStarData.map(({ repo, starRecords }) => ({
+    label: repo,
+    logo: "",
+    data: toReleaseDownloadPoints(starRecords, chartMode, options),
+  }));
+
+  return { datasets };
+};
+
+export const convertDataToChartData = (
+  repoData: RepoData[],
+  chartMode: ChartMode,
+  options?: ChartDataOptions,
+): XYChartData => {
+  const datasets: XYData[] = repoData.map(({ repo, starRecords, logoUrl }) => ({
+    label: repo,
+    logo: logoUrl,
+    data: toReleaseDownloadPoints(starRecords, chartMode, options),
+  }));
+
+  return { datasets };
+};

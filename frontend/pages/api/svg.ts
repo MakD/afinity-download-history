@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { optimize } from "svgo";
 import { parseHTML } from "linkedom";
 import XYChart from "@shared/packages/xy-chart";
-import { convertDataToChartData, getRepoData } from "@shared/common/chart";
+import { convertDataToChartData, getRepoData, type ChartMetric } from "@shared/common/chart";
 import { ChartMode } from "@shared/types/chart";
 import { loadRepos } from "@shared/common/repo-data";
 import reposJson from "@gh-data/repos.json";
@@ -25,6 +25,11 @@ const SVG_HEADERS = {
   "Content-Type": "image/svg+xml;charset=utf-8",
   "Cache-Control": "public, s-maxage=86400, max-age=86400",
 } as const;
+
+const ALLOWED_REPOS = (process.env.ALLOWED_REPOS || "makd/afinity")
+  .split(",")
+  .map((r) => r.trim().toLowerCase())
+  .filter(Boolean);
 
 const repoStore = loadRepos(reposJson as any);
 initOgAssets();
@@ -66,6 +71,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const repos = normalized.split(",").filter(Boolean);
   if (repos.length > MAX_REPOS_PER_REQUEST) {
     return sendText(res, 400, `Too many repos: max ${MAX_REPOS_PER_REQUEST} per request`);
+  }
+
+  if (!repos.every((r) => ALLOWED_REPOS.includes(r))) {
+    return sendText(res, 403, "This chart service only serves allowed repositories");
   }
 
   const style = typeof query.style === "string" ? query.style : "";
@@ -131,10 +140,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const typeParam = typeof query.type === "string" ? query.type : "";
   const logscaleParam = query.logscale;
   const legendParam = typeof query.legend === "string" ? query.legend : "";
+  const metricParam = typeof query.metric === "string" ? query.metric.toLowerCase() : "";
+  const metric: ChartMetric = metricParam === "stars" || metricParam === "star" ? "stars" : "downloads";
   const titleParam = typeof query.title === "string" ? query.title : undefined;
   const title =
     titleParam === undefined
-      ? "Download History"
+      ? metric === "stars" ? "Star History" : "Download History"
       : ["", "false", "0", "none"].includes(titleParam.toLowerCase()) ? "" : titleParam;
   let type: ChartMode = "Date";
   let size = typeof query.size === "string" ? query.size : "";
@@ -163,8 +174,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     size = "laptop";
   }
 
-  const svgCacheKey = `${repos.join(",")}|${type}|${size}|${theme}|${transparent}|${legendPosition}|${useLogScale}|${title}`;
-  const cachedSvg = svgCache.get(svgCacheKey);
+  const svgCacheKey = `${metric}|${repos.join(",")}|${type}|${size}|${theme}|${transparent}|${legendPosition}|${useLogScale}|${title}`; const cachedSvg = svgCache.get(svgCacheKey);
   if (cachedSvg) {
     recordCacheHit("svgChart");
     res.writeHead(200, SVG_HEADERS);
@@ -176,7 +186,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const nodataRepos = [];
 
   for (const repo of repos) {
-    const cacheData = cache.get(repo);
+    const cacheData = cache.get(`${metric}:${repo}`);
     if (cacheData) {
       recordCacheHit("starData");
       repoData.push({
@@ -197,12 +207,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      const data = await getRepoData(nodataRepos, token, MAX_REQUEST_AMOUNT);
+      const data = await getRepoData(nodataRepos, token, MAX_REQUEST_AMOUNT, metric)
 
       await Promise.all(
         data.map(async (d) => {
           d.logoUrl = await getBase64Image(`${d.logoUrl}&size=22`);
-          cache.set(d.repo, {
+          cache.set(`${metric}:${d.repo}`, {
             starRecords: d.starRecords,
             starAmount: d.starRecords[d.starRecords.length - 1].count,
             logoUrl: d.logoUrl,
@@ -238,7 +248,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       {
         title,
         xLabel: type === "Date" ? "Date" : "Timeline",
-        yLabel: "Downloads",
+        yLabel: metric === "stars" ? "GitHub Stars" : "Downloads",
         data: convertDataToChartData(repoData, type),
         showDots: false,
         transparent: transparent.toLowerCase() === "true",

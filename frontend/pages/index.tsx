@@ -1,5 +1,4 @@
 import React, { useState } from "react"
-import LeftSidebar from "../components/LeftSidebar"
 import RepoInputer from "../components/RepoInputer"
 import type { NextPage } from "next"
 import StarChartViewer from "../components/StarChartViewer"
@@ -10,10 +9,10 @@ const Index: NextPage = () => {
     const [isChartVisible, setChartVisibility] = useState(false) // Start with false since chart is not visible by default
 
     const metadata = {
-		title:       "GitHub Download History",
-		description: "View and compare GitHub download history of open source projects using releases tags.",
-		imageURL:    `${SITE_URL}/assets/star-history-preview.webp`,
-	}
+        title: "GitHub Download History",
+        description: "View and compare GitHub download history of open source projects using releases tags.",
+        imageURL: `${SITE_URL}/assets/star-history-preview.webp`,
+    }
 
     return (
         <>
@@ -37,13 +36,11 @@ const Index: NextPage = () => {
             </Head>
             <div className="relative w-full h-auto min-h-screen flex flex-col overflow-x-hidden">
                 <div className="w-full h-auto grow flex flex-row justify-center">
-                    <div className="w-full px-4 h-auto grow xl:grid xl:grid-cols-[240px_1fr] xl:gap-24">
-                        <div className="hidden xl:block">
-                            <LeftSidebar />
-                        </div>
-
+                    <div className="w-full px-4 h-auto grow">
                         <div className="w-full flex flex-col justify-start">
-                            <RepoInputer isChartVisible={isChartVisible} setChartVisibility={setChartVisibility} />
+                            <div className="hidden">
+                                <RepoInputer isChartVisible={isChartVisible} setChartVisibility={setChartVisibility} />
+                            </div>
                             {isChartVisible && <StarChartViewer />}
                         </div>
                     </div>
