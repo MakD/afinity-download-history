@@ -19,21 +19,23 @@ const mapReleaseFetchError = (
   error: any,
   metric: ChartMetric = "downloads",
 ) => {
+  const httpStatus = error?.status ?? error?.response?.status;
+  const detail = typeof error?.message === "string" ? error.message : "";
   let message = "";
   let status = 500;
 
-  if (error?.response?.status === 404) {
+  if (httpStatus === 404) {
     message = `Repo ${repo} not found`;
     status = 404;
-  } else if (error?.response?.status === 403) {
-    message = "GitHub API rate limit exceeded";
+  } else if (httpStatus === 403 || httpStatus === 429) {
+    message = `GitHub API: ${detail || "rate limit exceeded"}`;
     status = 403;
-  } else if (error?.response?.status === 401) {
-    message = "Access Token Unauthorized";
+  } else if (httpStatus === 401) {
+    message = `GitHub API: ${detail || "Access Token Unauthorized"}`;
     status = 401;
   } else if (
-    error?.status === 501 ||
-    (Array.isArray(error?.data) && error.data?.length === 0)
+    httpStatus === 501 ||
+    (Array.isArray(error?.data) && error.data.length === 0 && httpStatus < 400)
   ) {
     message =
       metric === "stars"
@@ -41,7 +43,9 @@ const mapReleaseFetchError = (
         : `Repo ${repo} has no release downloads`;
     status = 501;
   } else {
-    message = "Some unexpected error happened, try again later";
+    message = detail
+      ? `GitHub API error ${httpStatus ?? ""}: ${detail}`
+      : "Some unexpected error happened, try again later";
   }
 
   return { message, status, repo };
